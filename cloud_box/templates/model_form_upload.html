@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="/" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for entry in form %}
+           <div>{{ entry.label_tag }}</div>
+           <div>{{entry}}</div>
+        {% endfor %}
+        <button>Save!</button>
+    </form>
+<p><a href="{% url 'home' %}">Return to home</a></p>
+{% endblock %}
