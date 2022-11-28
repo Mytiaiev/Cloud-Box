@@ -13,20 +13,7 @@ class User(models.Model):
     login = models.CharField(max_length=50)
     
     
-    
 class Document(models.Model): 
-    # def hash_file(document, block_size=65536):
-    #     hasher = hashlib.md5()
-    #     for buf in iter(partial(document.read, block_size), b''):
-    #         hasher.update(buf)
-    #     return hasher.hexdigest()
-
-    # def hash_upload(instance, filename):
-    #     instance.document.open()
-    #     contents = instance.document.read()
-    #     fname, ext = os.path.splitext(filename)
-    #     return "{0}_{1}{2}".format(fname, hash_file(document), ext)
-        
     id = models.AutoField(primary_key=True)
     file_name = models.CharField(max_length=55)
     description = models.CharField(max_length=255, blank=True)
@@ -36,5 +23,19 @@ class Document(models.Model):
     def __str__(self):
         return f"{self.id},{self.file_name},{self.description}"
 
+    def md5(file:object) -> str:
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()
+        
 
+class DocumentHashSize(models.Model):
+    document_id = models.ForeignKey(Document, on_delete=models.CASCADE)
+    hash_size = models.CharField(max_length=255)
+    
+  
+            
+    
     

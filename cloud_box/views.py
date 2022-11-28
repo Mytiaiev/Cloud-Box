@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest
 from .forms import DocumentForm
-from .models import Document
+from .models import Document, DocumentHashSize
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 # Create your views here.
 def index(request):
@@ -21,11 +22,13 @@ def model_form_upload(request):
         if files.size > 300000000:
             return HttpResponseBadRequest("file to big, try upload file less than 300MB")
         else:
-            documnet = Document.objects.create(document=files)
-            document.save()
-            if form.is_valid():
-                form.save()
-                return redirect('view')
+            hash = Document.hash_md5(files)
+            has_list = DocumentHashSize.objects.all(hash_size)
+            if hash not in has_list:
+               DocumentHashSize.objects.create(hash_size=has)
+               form.save()
+               
+                
     else:
         form = DocumentForm()
     return render(request, template_name, {
