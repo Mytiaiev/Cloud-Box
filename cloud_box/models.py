@@ -2,21 +2,6 @@ from django.db import models
 import hashlib
 import os
 # Create your models here.
-
-
-class User(models.Model):
-    """Model for authefication users
-    in defoult create user
-    for admin-role need change role in admin panel
-    """
-    class Role(models.TextChoices):
-        GUEST = 'GUEST', 'Guest'
-        MODERATOR = 'MODERATOR', 'Moderator'
-    
-    id = models.AutoField(primary_key=True)
-    login = models.CharField(max_length=50)
-    
-    
 class Document(models.Model): 
     """Class for uplaoded files. colect file and description
     working with analog form

@@ -15,10 +15,4 @@ class CloudUser(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ("username", "password1", "password2")
-
-    def save(self, commit=True):
-        user = super(CloudUserForm, self).save(commit=False)
-        if commit:
-            user.save()
-        return user
+        fields = ("username", "password1")
