@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest
 from .forms import DocumentForm, CloudUser
 from .models import Document, DocumentHashSize
-# from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
@@ -105,4 +104,4 @@ def download(request, path):
                                     content_type="application/adminupload")
             response['Content-Disposition'] = 'inline; filename=' + os.path.basename(download_path)
             return response
-    raise Http404
+    raise PermissionDenied()

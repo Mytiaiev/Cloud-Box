@@ -1,7 +1,8 @@
 from django.urls import path, re_path
 from django.conf.urls.static import static
 from django.conf import settings
-from .views import *
+from .views import index, cloud_view, model_form_upload
+from .views import login_request, logout_user, register_request
 from django.views.static import serve
 
 urlpatterns = [
@@ -11,10 +12,13 @@ urlpatterns = [
     path('login', login_request, name='login'),
     path('logout', logout_user, name='logout'),
     path('register', register_request, name='register'),
-    re_path(r'^download/(?P<path>.*)$',serve,{'document_root':settings.MEDIA_ROOT})
-    
+    re_path(r'^download/(?P<path>.*)$', serve,
+            {'document_root': settings.MEDIA_ROOT})
+
 ]
 
 if settings.DEBUG:
-    urlpatterns+=static(settings.STATIC_URL,document_root=settings.STATIC_ROOT)
-    urlpatterns+=static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL,
+                        document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL,
+                        document_root=settings.MEDIA_ROOT)
