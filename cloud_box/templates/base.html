@@ -9,23 +9,15 @@
 <body>
     <ul>
         {% if request.user.is_authenticated %}
-            {% for group_for in request.user.groups.all %}
-                {% if group_for.name == 'banned' %}
-                    <h1>acces denied</h1>
-                    <li>{{user.username}} | <a href="{% url 'logout' %}">logout</a> </li>
-                {% endif %}
-            {% endfor %}
-                {% if request.user.is_authenticated %}
-                    <li>Login us {{user.username}} </li>
-                    <li><a href="{% url 'logout' %}">logout</a> </li>
-                {% else %}
-                    <li><a href="login">login</a></li>
-                    <li><a href="register">register</a></li>
-                {% endif %}
-                <li><a href="view">cloud box</a></li>
-                <li><a href="upload">uploaded at box</a></li>
+            <li>Login us {{user.username}} </li>
+            <li><a href="{% url 'logout' %}">logout</a> </li>
+        {% else %}
+            <li><a href="login">login</a></li>
+            <li><a href="register">register</a></li>
         {% endif %}
-            </ul>
+            <li><a href="view">cloud box</a></li>
+            <li><a href="upload">uploaded at box</a></li>
+    </ul>
 
     {% load crispy_forms_tags %}
     {% block content %}
