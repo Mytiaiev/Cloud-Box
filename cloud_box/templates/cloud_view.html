@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<table border="3">
+<table border="3" class="table table-hover">
     {% for document in documents %}
 
     <tr>
@@ -10,6 +10,7 @@
         <td>{{document.description}}</td>
         <td>{{document.user_id}}</td>
         <td><a href="{{MEDIA_UR}}{{document.document}}">file</a></td>
+        <td><a href="{{document.adminupload.url}}" download="{{document.adminupload.url}}">Download</a></td>
         <td>{{document.uploaded_at}}</td>
         <td>{{document.hash_size}}</td>
     </tr>

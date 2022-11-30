@@ -5,16 +5,17 @@ from .models import Document, DocumentHashSize
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.views.generic import CreateView
 from django.contrib import messages
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.views.generic import View
 
 # Create your views here.
 def index(request):
     return render(request=request, template_name='base.html')
 
 def cloud_view(request):
-    documents = Document.objects.all()
+    documents = Document.objects.all().order_by('-uploaded_at')
     return render(request,
                   template_name='cloud_view.html',
                   context={'documents':documents})
@@ -55,7 +56,6 @@ def register_request(request):
                 context={"register_form":form})
  
  
- 
 def login_request(request):
 	if request.method == "POST":
 		form = AuthenticationForm(request, data=request.POST)
@@ -75,3 +75,23 @@ def login_request(request):
 	return render(request=request,
                template_name="login.html",
                context={"login_form":form})
+ 
+ 
+def logout_user(request):
+    logout(request)
+    return redirect('login')
+    
+def bann_user(request):
+	del request.session['name']
+	del request.session['password']
+	raise PermissionDenied()
+
+  
+def download(request, path):
+    download_path = os.path.join(settings.MEDIA_ROOT, path)
+    if os.path.exists(download_path):
+        with open(download_path, 'rb') as fh:
+            response = HttpResponse(fh.read(), content_type="application/adminupload")
+            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(download_path)
+            return response
+    raise Http404
