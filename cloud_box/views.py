@@ -1,48 +1,99 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest
-from .forms import DocumentForm, CloudUser
-from .models import Document, DocumentHashSize
+from .forms.files import DocumentForm
+from .forms.user import CloudUser
+from .models import Document
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import PermissionDenied
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.http import HttpRequest
 import os
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
-def index(request):
+def index(request: HttpRequest) -> HttpResponse:
+    """ plain routing to render HOME PAGE"""
     return render(request=request,
                   template_name='base.html')
 
 
-def cloud_view(request):
-    documents = Document.objects.all().order_by('-uploaded_at')
+def cloud_view(request: HttpRequest) -> HttpResponse:
+    """ plain routing to render FILE VIEW PAGE"""
+    documents = Document.objects.all()
     return render(request,
                   template_name='cloud_view.html',
                   context={'documents': documents})
 
 
-def model_form_upload(request):
+def get_file_size(files: object) -> bool:
+    """Handler for check to size of object"""
+    limit = 300*1048576
+    if files.size > limit:
+        return HttpResponseBadRequest(
+            "file to big, upload file less than 300MB")
+
+
+def handle_uploaded_file(file: object):
+    with open(file, 'wb+') as destination:
+        for chunk in file.chunks():
+            destination.write(chunk)
+            print('rdy chunked')
+
+
+# def model_form_upload(request: HttpRequest) -> HttpResponse:
+#     '''try to read file'''
+#     if request.method == 'POST' and request.FILES['upload']:
+#         upload = request.FILES['upload'].read
+#         return render(request, 'model_form_upload.html')
+#     return render(request, 'model_form_upload.html')
+
+
+# def model_form_upload_in_memory(request: HttpRequest) -> HttpResponse:
+#     '''in memory version'''
+#     if request.method == 'POST' and request.FILES['upload']:
+#         upload = request.FILES['upload'].read
+#         inmemory = InMemoryUploadedFile(upload, upload.name,
+#                                         upload.name, upload.content_type,
+#                                         upload.size, upload.charset)
+#         file = inmemory.chunks()
+#         return render(request, 'model_form_upload.html')
+#     return render(request, 'model_form_upload.html')
+
+
+def model_form_upload_1(request: HttpRequest) -> HttpResponse:
+    ''' view handling this form will receive the file data in
+:attr:`request.FILES <django.http.HttpRequest.FILES>`'''
     if request.method == 'POST':
+        upload = request.FILES['file']
         form = DocumentForm(request.POST, request.FILES)
-        files = request.FILES['myfile']
-        if files.size > 300000000:
-            return HttpResponseBadRequest(
-                "file to big, upload file less than 300MB")
-        else:
-            hash = Document.get_hash(files)
-            has_list = DocumentHashSize.objects.all(Document.hash_size)
+        if form.is_valid():
+            hash = Document.get_hash(upload)
+            has_list = Document.objects.all().values_list('hash_size')
             if hash not in has_list:
-                DocumentHashSize.objects.create(hash_size=hash)
-                form.save()
+                Document.objects.create(
+                    file_path=upload.file_path,
+                    hash_size=hash)
+                return Document.objects.get().order_by('hash')
+            handle_uploaded_file(request.FILES['file'])
+            return redirect("view")
     else:
         form = DocumentForm()
-    return render(request=request,
-                  template_name='model_form_upload.html',
-                  context={'form': form})
+        return render(
+            request=request,
+            template_name='model_form_upload.html',
+            context={'form': form})
+        return render(request, 'model_form_upload.html')
+    return render(request, 'model_form_upload.html')
 
 
-def register_request(request):
+def register_request(request: HttpRequest) -> HttpResponse:
+    """ plain routing to render register page to user models"""
     if request.method == "POST":
         form = CloudUser(request.POST)
         if form.is_valid():
@@ -59,11 +110,31 @@ def register_request(request):
         context={"register_form": form})
 
 
-def is_banned(user):
+def is_banned(user: object) -> bool:
+    """foo will chek to is user exis to  banned group
+
+    Args:
+        user (object): UserCreateForm object
+
+    Returns:
+        bool: True or False
+    """
     return user.groups.filter(name='banned').exists()
 
 
-def login_request(request):
+def login_request(request: HttpRequest) -> HttpResponse:
+    """foo to login in session
+    be able to registred users
+
+    Args:
+        request (HttpRequest):
+
+    Raises:
+        PermissionDenied: for no registred users or banned
+
+    Returns:
+        HttpResponse:
+    """
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -85,18 +156,13 @@ def login_request(request):
             context={"login_form": form})
 
 
-def logout_user(request):
+def logout_user(request: HttpRequest) -> HttpResponse:
+    """ plain routing to end session for user models"""
     logout(request)
     return redirect('login')
 
 
-# def bann_user(request):
-#     del request.session['name']
-#     del request.session['password']
-#     raise PermissionDenied()
-
-
-def download(request, path):
+def download(request: HttpRequest, path: str) -> HttpResponse:
     download_path = os.path.join(settings.MEDIA_ROOT, path)
     if os.path.exists(download_path):
         with open(download_path, 'rb') as fh:

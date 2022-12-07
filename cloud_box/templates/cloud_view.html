@@ -6,14 +6,8 @@
 
     <tr>
         <td>{{document.id}}</td>
-        <td>{{document.file_name}}</td>
-        <td>{{document.description}}</td>
-        <td>{{document.user_id}}</td>
-        <td><a href="{{MEDIA_UR}}{{document.document}}">file</a></td>
-        <td><a href="{{document.adminupload.url}}" download="{{document.adminupload.url}}">Download</a></td>
-        <td>{{document.uploaded_at}}</td>
+        <td>{{document.file_path}}</td>
         <td>{{document.hash_size}}</td>
     </tr>
     {% endfor %}
-</table>
-{% endblock %}
+</table>{% endblock %}
