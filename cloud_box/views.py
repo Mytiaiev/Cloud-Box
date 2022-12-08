@@ -25,7 +25,7 @@ def index(request: HttpRequest) -> HttpResponse:
 
 def cloud_view(request: HttpRequest) -> HttpResponse:
     """ plain routing to render FILE VIEW PAGE"""
-    documents = Document.objects.all()
+    documents = Document.objects.order_by('-id')
     return render(request,
                   template_name='cloud_view.html',
                   context={'documents': documents})
@@ -33,37 +33,9 @@ def cloud_view(request: HttpRequest) -> HttpResponse:
 
 def get_file_size(files: object) -> bool:
     """Handler for check to size of object"""
-    limit = 300*1048576
-    if files.size > limit:
-        return HttpResponseBadRequest(
-            "file to big, upload file less than 300MB")
-
-
-def handle_uploaded_file(file: object):
-    with open(file, 'wb+') as destination:
-        for chunk in file.chunks():
-            destination.write(chunk)
-            print('rdy chunked')
-
-
-# def model_form_upload(request: HttpRequest) -> HttpResponse:
-#     '''try to read file'''
-#     if request.method == 'POST' and request.FILES['upload']:
-#         upload = request.FILES['upload'].read
-#         return render(request, 'model_form_upload.html')
-#     return render(request, 'model_form_upload.html')
-
-
-# def model_form_upload_in_memory(request: HttpRequest) -> HttpResponse:
-#     '''in memory version'''
-#     if request.method == 'POST' and request.FILES['upload']:
-#         upload = request.FILES['upload'].read
-#         inmemory = InMemoryUploadedFile(upload, upload.name,
-#                                         upload.name, upload.content_type,
-#                                         upload.size, upload.charset)
-#         file = inmemory.chunks()
-#         return render(request, 'model_form_upload.html')
-#     return render(request, 'model_form_upload.html')
+    limit = 10*1048576
+    if files.size < limit:
+        return True
 
 
 def model_form_upload_1(request: HttpRequest) -> HttpResponse:
@@ -71,17 +43,23 @@ def model_form_upload_1(request: HttpRequest) -> HttpResponse:
 :attr:`request.FILES <django.http.HttpRequest.FILES>`'''
     if request.method == 'POST':
         upload = request.FILES['file']
+        hash_tuple = ()
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
-            hash = Document.get_hash(upload)
-            has_list = Document.objects.all().values_list('hash_size')
-            if hash not in has_list:
-                Document.objects.create(
-                    file_path=upload.file_path,
-                    hash_size=hash)
-                return Document.objects.get().order_by('hash')
-            handle_uploaded_file(request.FILES['file'])
-            return redirect("view")
+            print(upload.size)
+            if get_file_size(upload):
+                hash = Document.get_hash(upload)
+                hash_list = [x for x in Document.objects.all().values_list('hash_size')]
+                hash_tuple += (hash,)
+                if hash_tuple not in hash_list:
+                    Document.objects.create(
+                        file_path=upload.read,
+                        hash_size=hash)
+                else:
+                    return redirect("view")
+            return HttpResponseBadRequest("file bigger tha 300mb")
+        else:
+            return HttpResponseBadRequest("Form invalid")
     else:
         form = DocumentForm()
         return render(

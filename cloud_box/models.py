@@ -16,7 +16,7 @@ class Document(models.Model):
 
     def get_hash(file: object) -> str:
         md = hashlib.md5()
-        with open(file, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                md.update(chunk)
+        # with open(file, "rb") as f:
+        for chunk in iter(lambda: file.read(4096), b""):
+            md.update(chunk)
         return md.hexdigest()
