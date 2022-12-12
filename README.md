@@ -11,8 +11,10 @@ This application is supposed upload and download files for users after registrat
 
 --Open http://localhost:8000/admin/ in browser and auth with user created
 
---Connect to DB 'sudo docker-compose exec db psql --username=admin --dbname=cloud'
+--Connect to DB `sudo docker-compose exec db psql --username=admin --dbname=cloud`
 
---Run 'sudo docker exec -it cloud python manage.py test' for test
+--Run `sudo docker exec -it cloud python manage.py test` for test
 
---Run 'sudo docker exec -it cloud python manage.py migrate --fake cloud_box zero' for drop migrations
+--Run `sudo docker exec -it cloud python -m pytest` for run test into Documents model
+
+--Run `sudo docker exec -it cloud python manage.py migrate --fake cloud_box zero` for drop migrations
