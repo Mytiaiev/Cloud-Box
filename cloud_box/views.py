@@ -7,10 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import PermissionDenied
-from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.http import HttpRequest
-import os
-from django.conf import settings
+from django.http import HttpRequest, FileResponse
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,6 +23,7 @@ def index(request: HttpRequest) -> HttpResponse:
 def cloud_view(request: HttpRequest) -> HttpResponse:
     """ plain routing to render FILE VIEW PAGE"""
     documents = Document.objects.order_by('-id')
+
     return render(request,
                   template_name='cloud_view.html',
                   context={'documents': documents})
@@ -33,7 +31,7 @@ def cloud_view(request: HttpRequest) -> HttpResponse:
 
 def get_file_size(files: object) -> bool:
     """Handler for check to size of object"""
-    limit = 10*1048576
+    limit = 300*1048576
     if files.size < limit:
         return True
 
@@ -43,21 +41,27 @@ def model_form_upload_1(request: HttpRequest) -> HttpResponse:
 :attr:`request.FILES <django.http.HttpRequest.FILES>`'''
     if request.method == 'POST':
         upload = request.FILES['file']
+        path = upload.chunks()
+        print(path)
         hash_tuple = ()
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
             print(upload.size)
             if get_file_size(upload):
                 hash = Document.get_hash(upload)
-                hash_list = [x for x in Document.objects.all().values_list('hash_size')]
+                hash_list = [x for x in Document.objects.all().values_list(
+                    'hash_size')]
                 hash_tuple += (hash,)
                 if hash_tuple not in hash_list:
                     Document.objects.create(
-                        file_path=upload.read,
+                        file_path=upload.chunks(),
                         hash_size=hash)
+                    print(request.get_full_path(upload))
                 else:
-                    return redirect("view")
-            return HttpResponseBadRequest("file bigger tha 300mb")
+                    return HttpResponseBadRequest('File already in storage')
+            else:
+                return HttpResponseBadRequest("file bigger tha 300mb")
+            return redirect("view")
         else:
             return HttpResponseBadRequest("Form invalid")
     else:
@@ -140,12 +144,9 @@ def logout_user(request: HttpRequest) -> HttpResponse:
     return redirect('login')
 
 
-def download(request: HttpRequest, path: str) -> HttpResponse:
-    download_path = os.path.join(settings.MEDIA_ROOT, path)
-    if os.path.exists(download_path):
-        with open(download_path, 'rb') as fh:
-            response = HttpResponse(fh.read(),
-                                    content_type="application/adminupload")
-            response['Content-Disposition'] = 'inline; filename=' + os.path.basename(download_path)
-            return response
-    raise PermissionDenied()
+def download_view(request: HttpRequest, pk: int) -> object:
+    obj = Document.objects.get(pk=pk)
+    response = FileResponse(open(obj, 'rb'))
+    response = HttpResponse(Document.path, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename=%s' % obj
+    return response
