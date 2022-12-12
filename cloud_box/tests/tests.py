@@ -1,4 +1,5 @@
 from django.test import TestCase
+from .models import Document
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 # Create your tests here
@@ -27,3 +28,11 @@ class LoginTest(TestCase):
     def test_wrong_pssword(self):
         user = authenticate(username='test', password='wrong')
         self.assertFalse(user is not None and user.is_authenticated)
+
+
+class UploadTest(TestCase):
+    def upload(self):
+        Document.objects.create(
+            file_path='any_path',
+            hash_size='any_size',)
+        Document.save()
